@@ -3,37 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cadastro de Cliente - CRM FINANZZO</title>
+  <title>Clientes - CRM FINANZZO</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
-    form {
-      max-width: 600px;
-      margin: 40px auto;
-      background: #fff;
+    .hidden { display: none; }
+    .modal {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
       padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      z-index: 1000;
+      width: 300px;
     }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    input, select {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    button {
-      background-color: #004AAD;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
+    .modal-header { font-weight: bold; margin-bottom: 10px; }
+    .modal-actions { text-align: right; margin-top: 15px; }
   </style>
 </head>
 <body>
@@ -42,8 +27,8 @@
     <nav>
       <ul>
         <li><a href="dashboard.html">Dashboard</a></li>
-        <li><a href="clientes.html">Clientes</a></li>
-        <li><a href="cadastro-cliente.html" class="active">Cadastro Cliente</a></li>
+        <li><a href="clientes.html" class="active">Clientes</a></li>
+        <li><a href="cadastro-cliente.html">Cadastro Cliente</a></li>
         <li><a href="documentos.html">Documentos</a></li>
         <li><a href="equipe.html">Equipe</a></li>
       </ul>
@@ -51,56 +36,109 @@
   </div>
 
   <div class="main">
-    <h1>Cadastro de Cliente</h1>
-    <form id="formCadastro">
-      <label for="nome">Nome</label>
-      <input type="text" id="nome" required>
+    <header>
+      <h1>Clientes</h1>
+    </header>
 
-      <label for="cpf">CPF</label>
-      <input type="text" id="cpf" required>
+    <section class="search-bar">
+      <input type="text" placeholder="Buscar cliente por nome ou CPF..." id="searchInput">
+    </section>
 
-      <label for="telefone">Telefone</label>
-      <input type="text" id="telefone">
+    <section class="clientes-lista">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>CPF</th>
+            <th>Telefone</th>
+            <th>Produto</th>
+            <th>Convênio</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="clientesTableBody"></tbody>
+      </table>
+    </section>
+  </div>
 
-      <label for="produto">Produto</label>
-      <select id="produto">
-        <option value="Consignado">Consignado</option>
-        <option value="Cartão Benefício">Cartão Benefício</option>
-        <option value="Refinanciamento">Refinanciamento</option>
-      </select>
-
-      <label for="convenio">Convênio</label>
-      <select id="convenio">
-        <option value="INSS">INSS</option>
-        <option value="SIAPE">SIAPE</option>
-        <option value="Exército">Exército</option>
-      </select>
-
-      <button type="submit">Cadastrar Cliente</button>
-    </form>
+  <div id="clienteModal" class="modal hidden">
+    <div class="modal-header">Detalhes do Cliente</div>
+    <div id="modalContent"></div>
+    <div class="modal-actions">
+      <button onclick="fecharModal()">Fechar</button>
+    </div>
   </div>
 
   <script>
-    const form = document.getElementById('formCadastro');
+    const searchInput = document.getElementById('searchInput');
+    const tableBody = document.getElementById('clientesTableBody');
 
-    form.addEventListener('submit', function(event) {
-      event.preventDefault();
+    function carregarClientes() {
+      const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+      tableBody.innerHTML = '';
 
-      const nome = document.getElementById('nome').value;
-      const cpf = document.getElementById('cpf').value;
-      const telefone = document.getElementById('telefone').value;
-      const produto = document.getElementById('produto').value;
-      const convenio = document.getElementById('convenio').value;
+      clientes.forEach((cliente, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${cliente.nome}</td>
+          <td>${cliente.cpf}</td>
+          <td>${cliente.telefone}</td>
+          <td>${cliente.produto}</td>
+          <td>${cliente.convenio}</td>
+          <td>
+            <button onclick="verCliente(this)">Ver</button>
+            <button>Editar</button>
+            <button onclick="excluirCliente(${index})">Excluir</button>
+          </td>
+        `;
+        tableBody.appendChild(tr);
+      });
+    }
 
-      const cliente = { nome, cpf, telefone, produto, convenio };
+    function verCliente(botao) {
+      const linha = botao.closest('tr');
+      const colunas = linha.getElementsByTagName('td');
+      const nome = colunas[0].innerText;
+      const cpf = colunas[1].innerText;
+      const telefone = colunas[2].innerText;
+      const produto = colunas[3].innerText;
+      const convenio = colunas[4].innerText;
 
-      let clientes = JSON.parse(localStorage.getItem('clientes')) || [];
-      clientes.push(cliente);
-      localStorage.setItem('clientes', JSON.stringify(clientes));
+      const modal = document.getElementById('clienteModal');
+      const content = document.getElementById('modalContent');
+      content.innerHTML = `
+        <p><strong>Nome:</strong> ${nome}</p>
+        <p><strong>CPF:</strong> ${cpf}</p>
+        <p><strong>Telefone:</strong> ${telefone}</p>
+        <p><strong>Produto:</strong> ${produto}</p>
+        <p><strong>Convênio:</strong> ${convenio}</p>
+      `;
+      modal.classList.remove('hidden');
+    }
 
-      alert('Cliente cadastrado com sucesso!');
-      form.reset();
+    function fecharModal() {
+      document.getElementById('clienteModal').classList.add('hidden');
+    }
+
+    function excluirCliente(index) {
+      if (confirm('Tem certeza que deseja excluir este cliente?')) {
+        let clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+        clientes.splice(index, 1);
+        localStorage.setItem('clientes', JSON.stringify(clientes));
+        carregarClientes();
+      }
+    }
+
+    searchInput.addEventListener('input', function () {
+      const termo = searchInput.value.toLowerCase();
+      const linhas = tableBody.getElementsByTagName('tr');
+      for (let linha of linhas) {
+        const texto = linha.innerText.toLowerCase();
+        linha.style.display = texto.includes(termo) ? '' : 'none';
+      }
     });
+
+    document.addEventListener('DOMContentLoaded', carregarClientes);
   </script>
 </body>
 </html>
