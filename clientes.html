@@ -64,9 +64,9 @@
             <td>Consignado</td>
             <td>INSS</td>
             <td>
-              <button onclick="verCliente('Maria Silva', '123.456.789-00', '(11) 98765-4321', 'Consignado', 'INSS')">Ver</button>
+              <button onclick="verCliente(this)">Ver</button>
               <button>Editar</button>
-              <button>Excluir</button>
+              <button onclick="excluirCliente(this)">Excluir</button>
             </td>
           </tr>
         </tbody>
@@ -95,7 +95,15 @@
       }
     });
 
-    function verCliente(nome, cpf, telefone, produto, convenio) {
+    function verCliente(botao) {
+      const linha = botao.closest('tr');
+      const colunas = linha.getElementsByTagName('td');
+      const nome = colunas[0].innerText;
+      const cpf = colunas[1].innerText;
+      const telefone = colunas[2].innerText;
+      const produto = colunas[3].innerText;
+      const convenio = colunas[4].innerText;
+
       const modal = document.getElementById('clienteModal');
       const content = document.getElementById('modalContent');
       content.innerHTML = `
@@ -110,6 +118,13 @@
 
     function fecharModal() {
       document.getElementById('clienteModal').classList.add('hidden');
+    }
+
+    function excluirCliente(botao) {
+      if (confirm('Tem certeza que deseja excluir este cliente?')) {
+        const linha = botao.closest('tr');
+        linha.remove();
+      }
     }
   </script>
 </body>
