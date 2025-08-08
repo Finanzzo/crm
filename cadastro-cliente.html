@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro de Cliente - CRM FINANZZO</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    form {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #004AAD;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <img src="img/logo.png" alt="Logo FINANZZO" class="logo">
+    <nav>
+      <ul>
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li><a href="clientes.html">Clientes</a></li>
+        <li><a href="cadastro-cliente.html" class="active">Cadastro Cliente</a></li>
+        <li><a href="documentos.html">Documentos</a></li>
+        <li><a href="equipe.html">Equipe</a></li>
+      </ul>
+    </nav>
+  </div>
+
+  <div class="main">
+    <h1>Cadastro de Cliente</h1>
+    <form id="formCadastro">
+      <label for="nome">Nome</label>
+      <input type="text" id="nome" required>
+
+      <label for="cpf">CPF</label>
+      <input type="text" id="cpf" required>
+
+      <label for="telefone">Telefone</label>
+      <input type="text" id="telefone">
+
+      <label for="produto">Produto</label>
+      <select id="produto">
+        <option value="Consignado">Consignado</option>
+        <option value="Cartão Benefício">Cartão Benefício</option>
+        <option value="Refinanciamento">Refinanciamento</option>
+      </select>
+
+      <label for="convenio">Convênio</label>
+      <select id="convenio">
+        <option value="INSS">INSS</option>
+        <option value="SIAPE">SIAPE</option>
+        <option value="Exército">Exército</option>
+      </select>
+
+      <button type="submit">Cadastrar Cliente</button>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('formCadastro');
+
+    form.addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const nome = document.getElementById('nome').value;
+      const cpf = document.getElementById('cpf').value;
+      const telefone = document.getElementById('telefone').value;
+      const produto = document.getElementById('produto').value;
+      const convenio = document.getElementById('convenio').value;
+
+      const cliente = { nome, cpf, telefone, produto, convenio };
+
+      let clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+      clientes.push(cliente);
+      localStorage.setItem('clientes', JSON.stringify(clientes));
+
+      alert('Cliente cadastrado com sucesso!');
+      form.reset();
+    });
+  </script>
+</body>
+</html>
