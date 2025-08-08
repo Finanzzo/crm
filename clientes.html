@@ -6,19 +6,44 @@
   <title>Clientes - CRM FINANZZO</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
-    .hidden { display: none; }
-    .modal {
-      position: fixed;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
+    .clientes-container {
+      max-width: 1000px;
+      margin: 40px auto;
+      background: #fff;
       padding: 20px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
-      z-index: 1000;
-      width: 300px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    .modal-header { font-weight: bold; margin-bottom: 10px; }
-    .modal-actions { text-align: right; margin-top: 15px; }
+    .clientes-container h2 {
+      margin-bottom: 20px;
+    }
+    .clientes-container input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    table th, table td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    table th {
+      background-color: #f4f4f4;
+    }
+    .btn {
+      margin-right: 5px;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-ver { background-color: #4CAF50; color: white; }
+    .btn-editar { background-color: #2196F3; color: white; }
+    .btn-excluir { background-color: #f44336; color: white; }
   </style>
 </head>
 <body>
@@ -36,15 +61,10 @@
   </div>
 
   <div class="main">
-    <header>
-      <h1>Clientes</h1>
-    </header>
+    <div class="clientes-container">
+      <h2>Clientes</h2>
+      <input type="text" id="buscaCliente" placeholder="Buscar cliente por nome ou CPF">
 
-    <section class="search-bar">
-      <input type="text" placeholder="Buscar cliente por nome ou CPF..." id="searchInput">
-    </section>
-
-    <section class="clientes-lista">
       <table>
         <thead>
           <tr>
@@ -56,76 +76,86 @@
             <th>Ações</th>
           </tr>
         </thead>
-        <tbody id="clientesTableBody">
-          <tr>
-            <td>Maria Silva</td>
-            <td>123.456.789-00</td>
-            <td>(11) 98765-4321</td>
-            <td>Consignado</td>
-            <td>INSS</td>
-            <td>
-              <button onclick="verCliente(this)">Ver</button>
-              <button>Editar</button>
-              <button onclick="excluirCliente(this)">Excluir</button>
-            </td>
-          </tr>
-        </tbody>
+        <tbody id="tabelaClientes"></tbody>
       </table>
-    </section>
-  </div>
-
-  <div id="clienteModal" class="modal hidden">
-    <div class="modal-header">Detalhes do Cliente</div>
-    <div id="modalContent"></div>
-    <div class="modal-actions">
-      <button onclick="fecharModal()">Fechar</button>
     </div>
   </div>
 
   <script>
-    const searchInput = document.getElementById('searchInput');
-    const tableBody = document.getElementById('clientesTableBody');
+    const tabelaClientes = document.getElementById('tabelaClientes');
+    const buscaCliente = document.getElementById('buscaCliente');
 
-    searchInput.addEventListener('input', function () {
-      const termo = searchInput.value.toLowerCase();
-      const linhas = tableBody.getElementsByTagName('tr');
-      for (let linha of linhas) {
-        const texto = linha.innerText.toLowerCase();
-        linha.style.display = texto.includes(termo) ? '' : 'none';
-      }
-    });
+    function carregarClientes() {
+      const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+      const filtro = buscaCliente.value.toLowerCase();
+      tabelaClientes.innerHTML = '';
 
-    function verCliente(botao) {
-      const linha = botao.closest('tr');
-      const colunas = linha.getElementsByTagName('td');
-      const nome = colunas[0].innerText;
-      const cpf = colunas[1].innerText;
-      const telefone = colunas[2].innerText;
-      const produto = colunas[3].innerText;
-      const convenio = colunas[4].innerText;
-
-      const modal = document.getElementById('clienteModal');
-      const content = document.getElementById('modalContent');
-      content.innerHTML = `
-        <p><strong>Nome:</strong> ${nome}</p>
-        <p><strong>CPF:</strong> ${cpf}</p>
-        <p><strong>Telefone:</strong> ${telefone}</p>
-        <p><strong>Produto:</strong> ${produto}</p>
-        <p><strong>Convênio:</strong> ${convenio}</p>
-      `;
-      modal.classList.remove('hidden');
+      clientes.forEach((cliente, index) => {
+        if (cliente.nome.toLowerCase().includes(filtro) || cliente.cpf.includes(filtro)) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${cliente.nome}</td>
+            <td>${cliente.cpf}</td>
+            <td>${cliente.telefone}</td>
+            <td>${cliente.produto}</td>
+            <td>${cliente.convenio}</td>
+            <td>
+              <button class="btn btn-ver" onclick="verCliente(${index})">Ver</button>
+              <button class="btn btn-editar" onclick="editarCliente(${index})">Editar</button>
+              <button class="btn btn-excluir" onclick="excluirCliente(${index})">Excluir</button>
+            </td>
+          `;
+          tabelaClientes.appendChild(tr);
+        }
+      });
     }
 
-    function fecharModal() {
-      document.getElementById('clienteModal').classList.add('hidden');
-    }
-
-    function excluirCliente(botao) {
+    function excluirCliente(index) {
       if (confirm('Tem certeza que deseja excluir este cliente?')) {
-        const linha = botao.closest('tr');
-        linha.remove();
+        const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+        clientes.splice(index, 1);
+        localStorage.setItem('clientes', JSON.stringify(clientes));
+        carregarClientes();
       }
     }
+
+    function editarCliente(index) {
+      const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+      const cliente = clientes[index];
+
+      const novoNome = prompt('Editar nome:', cliente.nome);
+      const novoCPF = prompt('Editar CPF:', cliente.cpf);
+      const novoTelefone = prompt('Editar telefone:', cliente.telefone);
+      const novoProduto = prompt('Editar produto:', cliente.produto);
+      const novoConvenio = prompt('Editar convênio:', cliente.convenio);
+
+      if (novoNome && novoCPF && novoTelefone && novoProduto && novoConvenio) {
+        clientes[index] = {
+          nome: novoNome.trim(),
+          cpf: novoCPF.trim(),
+          telefone: novoTelefone.trim(),
+          produto: novoProduto.trim(),
+          convenio: novoConvenio.trim()
+        };
+        localStorage.setItem('clientes', JSON.stringify(clientes));
+        carregarClientes();
+      }
+    }
+
+    function verCliente(index) {
+      const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+      const cliente = clientes[index];
+      alert(
+        `Nome: ${cliente.nome}\n` +
+        `CPF: ${cliente.cpf}\n` +
+        `Telefone: ${cliente.telefone}\n` +
+        `Produto: ${cliente.produto}\n` +
+        `Convênio: ${cliente.convenio}`
+      );
+    }
+
+    buscaCliente.addEventListener('input', carregarClientes);
+    document.addEventListener('DOMContentLoaded', carregarClientes);
   </script>
 </body>
 </html>
