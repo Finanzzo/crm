@@ -37,6 +37,10 @@
     .membro-lista button {
       margin-left: 10px;
     }
+    .editando input {
+      width: auto;
+      margin-left: 10px;
+    }
   </style>
 </head>
 <body>
@@ -93,11 +97,19 @@
 
       equipe.forEach((membro, index) => {
         const li = document.createElement('li');
-        li.textContent = `${membro.nome} - ${membro.cargo}`;
-        const btn = document.createElement('button');
-        btn.textContent = 'Excluir';
-        btn.onclick = () => excluirMembro(index);
-        li.appendChild(btn);
+        li.innerHTML = `<span>${membro.nome} - ${membro.cargo}</span>`;
+
+        const btnEditar = document.createElement('button');
+        btnEditar.textContent = 'Editar';
+        btnEditar.onclick = () => editarMembro(index);
+
+        const btnExcluir = document.createElement('button');
+        btnExcluir.textContent = 'Excluir';
+        btnExcluir.onclick = () => excluirMembro(index);
+
+        li.appendChild(btnEditar);
+        li.appendChild(btnExcluir);
+
         listaEquipe.appendChild(li);
       });
     }
@@ -107,6 +119,20 @@
       equipe.splice(index, 1);
       localStorage.setItem('equipe', JSON.stringify(equipe));
       carregarEquipe();
+    }
+
+    function editarMembro(index) {
+      const equipe = JSON.parse(localStorage.getItem('equipe')) || [];
+      const membro = equipe[index];
+
+      const novoNome = prompt('Editar nome:', membro.nome);
+      const novoCargo = prompt('Editar cargo:', membro.cargo);
+
+      if (novoNome !== null && novoCargo !== null) {
+        equipe[index] = { nome: novoNome.trim(), cargo: novoCargo.trim() };
+        localStorage.setItem('equipe', JSON.stringify(equipe));
+        carregarEquipe();
+      }
     }
 
     document.addEventListener('DOMContentLoaded', carregarEquipe);
