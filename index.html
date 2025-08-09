@@ -65,6 +65,12 @@ h1, h2, h3, h4, h5, h6, p, th, td, label, span {
 </style>
 </head>
 <body>
+  <script>
+    const user = localStorage.getItem(\"loggedUser\");
+    if (!user) {
+      window.location.href = \"login.html\";
+    }
+  </script>
   <div class="wrap" id="app">
     <header>
       <div class="brand">
