@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CRM Simples — Clientes, Propostas & Comissões</title>
+
+  <style>
+    :root{
+      --bg1:#0a4d6e; --bg2:#1a7fa1; --bg3:#8a5fd4;
+      --accent:#c8912c; --muted:#f0f5f8; --card:#1a5a7a;
+      --glass: rgba(255,255,255,0.08);
+      --maxw:1200px;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh;
+      background:linear-gradient(180deg,var(--bg1),var(--bg2),var(--bg3));
+      color:var(--muted);
+      -webkit-font-smoothing:antialiased;
+    }
+    .wrap{max-width:var(--maxw);margin:20px auto;padding:16px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));box-shadow:0 12px 48px rgba(0,0,0,0.33)}
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:56px;height:56px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#042c35;font-weight:800}
+    h1{margin:0;font-size:20px}
+    .controls{display:flex;gap:8px;align-items:center}
+    .btn{background:var(--accent);color:#06262f;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.12);color:var(--muted)}
+    .layout{display:grid;grid-template-columns:320px 1fr;gap:16px}
+    .panel{background:var(--glass);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06)}
+    .sidebar .section{margin-bottom:12px}
+    .list{max-height:420px;overflow:auto}
+    .item{padding:8px;border-radius:8px;margin-bottom:6px;cursor:pointer}
+    .item:hover{background:rgba(255,255,255,0.03)}
+    .item.active{background:rgba(255,255,255,0.06)}
+    .form-row{display:flex;gap:8px;align-items:center}
+    label{font-size:12px;color:rgba(255,255,255,0.9)}
+    input[type=text], input[type=email], input[type=number], input[type=date], select, textarea{
+      width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--muted)
+    }
+    textarea{min-height:80px;resize:vertical}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    table th, table td{Padding:8px 10px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13px}
+    .muted{font-size:12px;color:rgba(255,255,255,0.8)}
+    .row{display:flex;gap:12px}
+    .col{flex:1}
+    .small{font-size:12px}
+    .badge{padding:4px 8px;border-radius:999px;background:rgba(255,255,255,0.04);font-size:12px}
+    .danger{color:#ffb3aa}
+    .actions{display:flex;gap:6px}
+    .footer{margin-top:12px;font-size:13px;color:rgba(255,255,255,0.85);display:flex;justify-content:space-between;align-items:center}
+    @media(max-width:980px){.layout{grid-template-columns:1fr}.sidebar{order:2}}
+  </style>
+
+<style>
+body {
+    background-color: #013440 !important;
+    color: #ffffff !important;
+}
+h1, h2, h3, h4, h5, h6, p, th, td, label, span {
+    color: #ffffff !important;
+}
+</style>
+</head>
+<body>
+  <div class="wrap" id="app">
+    <header>
+      <div class="brand">
+        <div class="logo">F</div>
+        <div>
+          <h1>CRM — Clientes • Propostas • Comissões</h1>
+          <div class="muted small">Versão local (localStorage)</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn ghost" onclick="fillDemo()">Preencher demo</button>
+        <button class="btn ghost" onclick="clearAll()">Limpar tudo</button>
+        <button class="btn" onclick="exportCSV()">Exportar propostas (CSV)</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <!-- SIDEBAR: Clientes -->
+      <aside class="panel sidebar">
+        <div class="section">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <strong>Clientes</strong>
+            <button class="btn ghost small" onclick="showClientForm()">+ Novo</button>
+          </div>
+
+          <div class="list" id="clientsList" aria-live="polite"></div>
+        </div>
+
+        <div class="section">
+          <strong>Filtros</strong>
+          <div style="margin-top:8px">
+            <label class="small">Cliente</label>
+            <select id="filterClient" onchange="renderProposals()">
+              <option value="">Todos</option>
+            </select>
+
+            <label class="small" style="margin-top:8px">Status</label>
+            <select id="filterStatus" onchange="renderProposals()">
+              <option value="">Todos</option>
+              <option>Em negociação</option>
+              <option>Fechada</option>
+              <option>Perdida</option>
+            </select>
+
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <div style="flex:1">
+                <label class="small">De</label>
+                <input type="date" id="filterFrom" onchange="renderProposals()">
+              </div>
+              <div style="flex:1">
+                <label class="small">Até</label>
+                <input type="date" id="filterTo" onchange="renderProposals()">
+              </div>
+            </div>
+            <div style="margin-top:8px">
+              <button class="btn ghost" onclick="resetFilters()">Limpar filtros</button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- MAIN -->
+      <main>
+        <section class="panel" style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <strong>Propostas</strong>
+            <div class="muted small">Total de propostas: <span id="countProposals">0</span></div>
+          </div>
+
+          <!-- Formulário de proposta -->
+          <div style="margin-top:10px">
+            <form id="proposalForm" onsubmit="event.preventDefault(); saveProposal()">
+              <div class="row">
+                <div class="col">
+                  <label class="small">Cliente</label>
+                  <select id="proposalClient" required></select>
+                </div>
+                <div style="width:160px">
+                  <label class="small">Data</label>
+                  <input type="date" id="proposalDate" required>
+                </div>
+                <div style="width:160px">
+                  <label class="small">Status</label>
+                  <select id="proposalStatus" required>
+                    <option>Em negociação</option>
+                    <option>Fechada</option>
+                    <option>Perdida</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="row" style="margin-top:8px">
+                <div class="col">
+                  <label class="small">Título</label>
+                  <input id="proposalTitle" type="text" required placeholder="Ex: Empréstimo Pessoa Física">
+                </div>
+                <div style="width:160px">
+                  <label class="small">Valor (R$)</label>
+                  <input id="proposalValue" type="number" step="0.01" min="0" required placeholder="10000">
+                </div>
+                <div style="width:220px">
+                  <label class="small">Comissão</label>
+                  <div style="display:flex;gap:8px">
+                    <input id="commissionAmount" type="number" step="0.01" min="0" placeholder="0" style="flex:1">
+                    <select id="commissionType" style="width:120px">
+                      <option value="percent">%</option>
+                      <option value="fixed">R$ fixo</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-top:8px">
+                <label class="small">Descrição</label>
+                <textarea id="proposalDesc" placeholder="Observações..."></textarea>
+              </div>
+
+              <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+                <button class="btn" type="submit">Salvar proposta</button>
+                <button type="button" class="btn ghost" onclick="resetProposalForm()">Limpar</button>
+                <div class="muted small" style="margin-left:auto">Comissão calculada: R$ <span id="calculatedCommission">0.00</span></div>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section class="panel">
+          <!-- Tabela de propostas -->
+          <div style="overflow:auto">
+            <table id="proposalsTable" aria-live="polite">
+              <thead>
+                <tr>
+                  <th>Título</th>
+                  <th>Cliente</th>
+                  <th>Data</th>
+                  <th>Valor (R$)</th>
+                  <th>Comissão (R$)</th>
+                  <th>Status</th>
+                  <th style="width:130px">Ações</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div class="footer" style="margin-top:12px">
+            <div>
+              <strong>Total propostas:</strong> R$ <span id="totalValue">0.00</span>
+              &nbsp;&nbsp;|&nbsp;&nbsp;
+              <strong>Total comissões:</strong> R$ <span id="totalComm">0.00</span>
+            </div>
+            <div class="muted small">Dados salvos localmente no navegador.</div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modais simplificados usando prompt/confirm where needed -->
+
+  <script>
+    // Storage keys
+    const KEY_CLIENTS = 'crm_clients';
+    const KEY_PROPOSALS = 'crm_proposals';
+
+    // In-memory arrays
+    let clients = [];
+    let proposals = [];
+
+    // Editing state
+    let editingClientId = null;
+    let editingProposalId = null;
+
+    // Init
+    function $(id){return document.getElementById(id)}
+
+    function loadData(){
+      try{
+        clients = JSON.parse(localStorage.getItem(KEY_CLIENTS)) || [];
+      }catch(e){ clients = [] }
+      try{
+        proposals = JSON.parse(localStorage.getItem(KEY_PROPOSALS)) || [];
+      }catch(e){ proposals = [] }
+    }
+
+    function saveData(){
+      localStorage.setItem(KEY_CLIENTS, JSON.stringify(clients));
+      localStorage.setItem(KEY_PROPOSALS, JSON.stringify(proposals));
+    }
+
+    // CLIENTS
+    function renderClients(){
+      const list = $('clientsList'); list.innerHTML = '';
+      const select = $('filterClient'); select.innerHTML = '<option value="">Todos</option>';
+      const proposalClient = $('proposalClient'); proposalClient.innerHTML = '<option value="">-- selecione --</option>';
+
+      clients.forEach(c=>{
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-weight:600">${escapeHtml(c.name)}</div>
+            <div class="muted small">${escapeHtml(c.email||'—')} ${c.phone? '• '+escapeHtml(c.phone):''}</div>
+          </div>
+          <div class="actions">
+            <button class="btn ghost small" onclick="editClient('${c.id}', event)">Editar</button>
+            <button class="btn ghost small danger" onclick="deleteClient('${c.id}', event)">Excluir</button>
+          </div>
+        </div>`;
+        list.appendChild(div);
+
+        const opt = document.createElement('option');
+        opt.value = c.id; opt.textContent = c.name;
+        select.appendChild(opt);
+
+        const opt2 = opt.cloneNode(true);
+        proposalClient.appendChild(opt2);
+      });
+
+      // If no clients, show message
+      if(clients.length===0){
+        list.innerHTML = '<div class="muted small'>Nenhum cliente cadastrado. Clique em + Novo para adicionar.</div>';
+      }
+    }
+
+    function showClientForm(){
+      // Simple prompt-based form to keep single-file minimal
+      const name = prompt('Nome do cliente:');
+      if(!name) return;
+      const email = prompt('E-mail (opcional):','');
+      const phone = prompt('Telefone (opcional):','');
+      const notes = prompt('Observações (opcional):','');
+
+      const id = cryptoRandomId();
+      clients.push({id, name, email, phone, notes});
+      saveData();
+      renderClients();
+      renderProposals();
+    }
+
+    function editClient(id, ev){
+      ev?.stopPropagation();
+      const c = clients.find(x=>x.id===id);
+      if(!c) return alert('Cliente não encontrado');
+      const name = prompt('Nome do cliente:', c.name);
+      if(!name) return;
+      const email = prompt('E-mail (opcional):', c.email || '');
+      const phone = prompt('Telefone (opcional):', c.phone || '');
+      const notes = prompt('Observações (opcional):', c.notes || '');
+      c.name = name; c.email = email; c.phone = phone; c.notes = notes;
+      saveData();
+      renderClients();
+      renderProposals();
+    }
+
+    function deleteClient(id, ev){
+      ev?.stopPropagation();
+      const related = proposals.filter(p=>p.clientId===id);
+      let msg = 'Deseja realmente excluir este cliente?';
+      if(related.length>0) msg += `
+
+Atenção: existem ${related.length} proposta(s) associadas a este cliente. Elas serão removidas também.`;
+      if(!confirm(msg)) return;
+      clients = clients.filter(c=>c.id!==id);
+      proposals = proposals.filter(p=>p.clientId!==id);
+      saveData();
+      renderClients();
+      renderProposals();
+    }
+
+    // PROPOSALS
+    function saveProposal(){
+      const clientId = $('proposalClient').value;
+      if(!clientId) return alert('Selecione um cliente.');
+      const date = $('proposalDate').value;
+      const title = $('proposalTitle').value.trim();
+      const status = $('proposalStatus').value;
+      const value = parseFloat($('proposalValue').value) || 0;
+      const commVal = parseFloat($('commissionAmount').value) || 0;
+      const commType = $('commissionType').value;
+      const desc = $('proposalDesc').value.trim();
+
+      const computedCommission = computeCommission(value, commVal, commType);
+
+      if(!title) return alert('Informe um título para a proposta.');
+
+      if(editingProposalId){
+        // update
+        const p = proposals.find(x=>x.id===editingProposalId);
+        if(!p) return alert('Proposta não encontrada.');
+        p.clientId = clientId;
+        p.date = date;
+        p.title = title;
+        p.status = status;
+        p.value = value;
+        p.commission = {type: commType, amount: commVal, computed: computedCommission};
+        p.desc = desc;
+        editingProposalId = null;
+      }else{
+        const id = cryptoRandomId();
+        proposals.push({
+          id, clientId, date, title, status, value,
+          commission: {type: commType, amount: commVal, computed: computedCommission},
+          desc
+        });
+      }
+
+      saveData();
+      resetProposalForm();
+      renderProposals();
+    }
+
+    function computeCommission(value, commVal, commType){
+      if(!value || value<=0) return 0;
+      if(!commVal || commVal<=0) return 0;
+      if(commType==='percent'){
+        return parseFloat(((value * commVal)/100).toFixed(2));
+      }else{
+        return parseFloat(parseFloat(commVal).toFixed(2));
+      }
+    }
+
+    function resetProposalForm(){
+      editingProposalId = null;
+      $('proposalClient').value = '';
+      $('proposalDate').value = '';
+      $('proposalStatus').value = 'Em negociação';
+      $('proposalTitle').value = '';
+      $('proposalValue').value = '';
+      $('commissionAmount').value = '';
+      $('commissionType').value = 'percent';
+      $('proposalDesc').value = '';
+      $('calculatedCommission').textContent = '0.00';
+    }
+
+    function editProposal(id){
+      const p = proposals.find(x=>x.id===id);
+      if(!p) return alert('Proposta não encontrada.');
+      editingProposalId = id;
+      $('proposalClient').value = p.clientId;
+      $('proposalDate').value = p.date || '';
+      $('proposalStatus').value = p.status || 'Em negociação';
+      $('proposalTitle').value = p.title || '';
+      $('proposalValue').value = p.value ?? '';
+      $('commissionAmount').value = p.commission?.amount ?? '';
+      $('commissionType').value = p.commission?.type ?? 'percent';
+      $('proposalDesc').value = p.desc || '';
+      $('calculatedCommission').textContent = (p.commission?.computed ?? 0).toFixed(2);
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+
+    function deleteProposal(id){
+      if(!confirm('Excluir proposta?')) return;
+      proposals = proposals.filter(p=>p.id!==id);
+      saveData();
+      renderProposals();
+    }
+
+    // RENDER PROPOSALS
+    function renderProposals(){
+      // populate client select (done in renderClients)
+      renderClients();
+
+      const tbody = document.querySelector('#proposalsTable tbody');
+      tbody.innerHTML = '';
+
+      const filterClient = $('filterClient').value;
+      const filterStatus = $('filterStatus').value;
+      const from = $('filterFrom').value;
+      const to = $('filterTo').value;
+
+      let filtered = proposals.slice();
+
+      if(filterClient) filtered = filtered.filter(p=>p.clientId===filterClient);
+      if(filterStatus) filtered = filtered.filter(p=>p.status===filterStatus);
+      if(from) filtered = filtered.filter(p=>p.date >= from);
+      if(to) filtered = filtered.filter(p=>p.date <= to);
+
+      // sort by date desc
+      filtered.sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+
+      let totalValue = 0;
+      let totalComm = 0;
+
+      filtered.forEach(p=>{
+        const client = clients.find(c=>c.id===p.clientId);
+        const tr = document.createElement('tr');
+        const comm = p.commission?.computed ?? computeCommission(p.value, p.commission?.amount || 0, p.commission?.type || 'percent');
+        totalValue += Number(p.value || 0);
+        totalComm += Number(comm || 0);
+
+        tr.innerHTML = `
+          <td>${escapeHtml(p.title)}</td>
+          <td>${client? escapeHtml(client.name) : '<span class="muted small'>Cliente removido</span>'}</td>
+          <td>${p.date || '—'}</td>
+          <td>R$ ${formatNumber(p.value)}</td>
+          <td>R$ ${formatNumber(comm)}</td>
+          <td>${escapeHtml(p.status)}</td>
+          <td>
+            <div class="actions">
+              <button class="btn ghost small" onclick="editProposal('${p.id}')">Editar</button>
+              <button class="btn ghost small danger" onclick="deleteProposal('${p.id}')">Excluir</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      $('countProposals').textContent = filtered.length;
+      $('totalValue').textContent = formatNumber(totalValue);
+      $('totalComm').textContent = formatNumber(totalComm);
+    }
+
+    // HELPERS
+    function cryptoRandomId(){
+      // short unique id
+      return 'id-' + Math.random().toString(36).slice(2,9);
+    }
+
+    function formatNumber(v){
+      return Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    }
+
+    function escapeHtml(s){
+      if(s==null) return '';
+      return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    }
+
+    function resetFilters(){
+      $('filterClient').value = '';
+      $('filterStatus').value = '';
+      $('filterFrom').value = '';
+      $('filterTo').value = '';
+      renderProposals();
+    }
+
+    // Export CSV (propostas atuais com filtro aplicado)
+    function exportCSV(){
+      const rows = [['Título','Cliente','Data','Valor','Comissão','Status','Descrição']];
+      // collect currently rendered rows
+      const filterClient = $('filterClient').value;
+      const filterStatus = $('filterStatus').value;
+      const from = $('filterFrom').value;
+      const to = $('filterTo').value;
+
+      let filtered = proposals.slice();
+      if(filterClient) filtered = filtered.filter(p=>p.clientId===filterClient);
+      if(filterStatus) filtered = filtered.filter(p=>p.status===filterStatus);
+      if(from) filtered = filtered.filter(p=>p.date >= from);
+      if(to) filtered = filtered.filter(p=>p.date <= to);
+
+      filtered.forEach(p=>{
+        const client = clients.find(c=>c.id===p.clientId);
+        const comm = p.commission?.computed ?? computeCommission(p.value, p.commission?.amount || 0, p.commission?.type || 'percent');
+        rows.push([
+          p.title,
+          client ? client.name : '—',
+          p.date || '',
+          Number(p.value||0).toFixed(2),
+          Number(comm||0).toFixed(2),
+          p.status,
+          p.desc || ''
+        ]);
+      });
+
+      const csvContent = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const blob = new Blob([csvContent], {type: 'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'propostas_export.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Demo & utilities
+    function fillDemo(){
+      if(!confirm('Criar dados demo? (substituirá dados existentes)')) return;
+      clients = [
+        {id:'c1', name:'Empresa Alpha', email:'alpha@ex.com', phone:'(11) 99999-0001', notes:'Cliente estratégico'},
+        {id:'c2', name:'João Silva', email:'joao@ex.com', phone:'(11) 98888-1111', notes:''},
+        {id:'c3', name:'Maria Souza', email:'maria@ex.com', phone:'(21) 97777-2222', notes:'Preferência contato via WhatsApp'},
+      ];
+      proposals = [
+        {id:'p1', clientId:'c1', date: todayOffset(-10), title:'Financiamento Imobil.', status:'Em negociação', value: 250000, commission:{type:'percent', amount:2, computed: computeCommission(250000,2,'percent')}, desc:'Proposta para imóvel comercial.'},
+        {id:'p2', clientId:'c2', date: todayOffset(-3), title:'Crédito Pessoal', status:'Fechada', value: 15000, commission:{type:'fixed', amount:500, computed: computeCommission(15000,500,'fixed')}, desc:'Fechada via equipe B.'},
+        {id:'p3', clientId:'c3', date: todayOffset(-1), title:'Cartão PJ', status:'Perdida', value: 0, commission:{type:'percent', amount:1, computed:0}, desc:'Cliente optou por concorrente.'},
+      ];
+      saveData();
+      resetProposalForm();
+      renderProposals();
+      alert('Dados demo carregados.');
+    }
+
+    function todayOffset(days=0){
+      const d = new Date(); d.setDate(d.getDate()+days);
+      return d.toISOString().slice(0,10);
+    }
+
+    function clearAll(){
+      if(!confirm('Limpar todos os dados salvos localmente?')) return;
+      localStorage.removeItem(KEY_CLIENTS);
+      localStorage.removeItem(KEY_PROPOSALS);
+      clients = []; proposals = [];
+      renderClients();
+      renderProposals();
+    }
+
+    // Commission live calc when editing values
+    document.addEventListener('input', (e)=>{
+      if(['proposalValue','commissionAmount','commissionType'].includes(e.target.id)){
+        const v = parseFloat($('proposalValue').value) || 0;
+        const c = parseFloat($('commissionAmount').value) || 0;
+        const t = $('commissionType').value;
+        const computed = computeCommission(v,c,t);
+        $('calculatedCommission').textContent = computed.toFixed(2);
+      }
+    });
+
+    // bootstrap
+    (function init(){
+      loadData();
+      renderClients();
+      renderProposals();
+
+      // If no clients exist, initialize empty selects
+      const pc = $('proposalClient');
+      if(pc && pc.options.length<=1){ // first option is placeholder
+        pc.innerHTML = '<option value="">-- selecione --</option>';
+      }
+    })();
+  </script>
+</body>
+</html>
