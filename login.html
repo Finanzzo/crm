@@ -62,18 +62,21 @@
     <button onclick="fazerLogin()">Entrar</button>
   </div>
 
-  <script>
-    function fazerLogin() {
-      const usuario = document.getElementById("usuario").value.trim();
-      const senha = document.getElementById("senha").value.trim();
+ <script>
+// Garante que o usuário esteja deslogado ao abrir a tela de login
+localStorage.removeItem("logado");
 
-      if (usuario === "FINANZZO" && senha === "finanzzo@2025") {
+function fazerLogin() {
+    const usuario = document.getElementById("usuario").value.trim();
+    const senha = document.getElementById("senha").value.trim();
+
+    if (usuario === "FINANZZO" && senha === "finanzzo@2025") {
         localStorage.setItem("logado", "true");
         window.location.href = "index.html";
-      } else {
-        alert("Usuário ou senha incorretos.");
-      }
+    } else {
+        document.getElementById("erroMsg").style.display = "block";
     }
-  </script>
+}
+</script>
 </body>
 </html>
