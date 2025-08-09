@@ -1,3 +1,5 @@
+CRM ORIGINAL
+
 <!doctype html>
 <html lang="pt-BR">
 <head>
@@ -55,6 +57,12 @@
   </style>
 </head>
 <body>
+<script>
+  // Verifica se o usuário está logado
+  if (localStorage.getItem("logado") !== "true") {
+    window.location.href = "login.html"; // Redireciona para login
+  }
+</script>
   <div class="wrap" id="app">
     <header>
       <div class="brand">
